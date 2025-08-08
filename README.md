@@ -2476,10 +2476,34 @@ else
 
 
 
+# Fast Memory code
 
-
-
-
-
+    Shinchan memoryfast = new Shinchan();
+    string[] pocessname = { "HD-Player" };
+    bool sucess = memoryfast.SetProcess(pocessname);
+    
+    if (!sucess)
+    {
+        return;
+    }
+    Status.Text = "Active";
+    
+    IEnumerable<long> resule = await memoryfast.AoBScan("Scan Replace");
+    
+    foreach (long id in resule)
+    {
+        memoryfast.AobReplace(id, "Replace");
+    
+    
+    }
+    Status.Text = "Active";
+    var assembly = Assembly.GetExecutingAssembly();
+    Console.Beep(2000, 400);
+    {
+    }
+    
+    
+    
+    
 
 
